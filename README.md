@@ -32,7 +32,29 @@ This BFF template solves that problem on **Day 0**:
 
 ---
 
-## 3. Quick Start & Local Execution
+## 3. Frontend Developer Quick Guide: Using Swagger UI
+
+Frontend developers (especially junior engineers) should use Swagger UI (`http://localhost:3000/documentation`) as an interactive development harness rather than manually guessing API contracts or hardcoding mock shapes.
+
+> 📖 **Full Guide**: For detailed walkthroughs, parameter breakdowns, Angular `HttpClient` code samples, and automated TypeScript contract generation, see [**Frontend Developer Guide: Swagger UI & OpenAPI**](docs/swagger-guide-for-frontend.md).
+
+### The 4-Step Frontend Workflow
+
+1. **Verify the Pathway First**:
+   - Hit `GET /api/v1/ping` in Swagger UI via **Try it out** to verify routing, headers, and reverse proxies before writing UI components.
+2. **Inspect the Canonical 9-Spine Contract**:
+   - Expand `GET /api/v1/:domain/discover`. Look at the **Response Schema** to understand the 9 immutable spine fields (`id`, `title`, `domain`, `status`, `created_at`, `updated_at`, `owner_id`, `version`, `facets`) and dynamic `attributes`.
+3. **Generate TypeScript Types Automatically**:
+   - Do not hand-craft response interfaces. Generate them directly from the OpenAPI schema:
+     ```bash
+     npx openapi-typescript http://localhost:3000/documentation/json -o src/app/core/models/bff-contract.ts
+     ```
+4. **Test Live in the UI**:
+   - Use the **Try it out** button with path parameter `domain: automobile` and query parameters `page: 1`, `pageSize: 10` to see real JSON payloads returned by Fastify.
+
+---
+
+## 4. Quick Start & Local Execution
 
 ### Local Development (Direct Node.js)
 ```bash
@@ -61,7 +83,7 @@ curl -i http://localhost:3000/api/v1/ping
 
 ---
 
-## 4. Production Deployment: Docker Swarm
+## 5. Production Deployment: Docker Swarm
 
 This project is configured out-of-the-box for **Docker Swarm** environments with zero Kubernetes dependency.
 
@@ -88,7 +110,7 @@ docker service update --image localhost/bff-template:v1.1.0 bff_bff
 
 ---
 
-## 5. The Stub-to-Hydration Protocol
+## 6. The Stub-to-Hydration Protocol
 
 This service operates in three configurable modes via the `BFF_MODE` environment variable:
 
@@ -119,7 +141,7 @@ To hydrate a domain (e.g. `automobile`) with real upstream data:
 
 ---
 
-## 6. Directory Layout
+## 7. Directory Layout
 
 ```
 bff-template/
@@ -127,6 +149,8 @@ bff-template/
 ├── docker-compose.yml          # Swarm-ready deployment specification
 ├── package.json                # Dependencies: Fastify 5, CORS, Cookies, Vitest
 ├── tsconfig.json               # TypeScript ES2022 / NodeNext configuration
+├── docs/
+│   └── swagger-guide-for-frontend.md  # Detailed guide for FE devs using Swagger
 ├── src/
 │   ├── server.ts               # Process bootstrap and port binding
 │   ├── app.ts                  # Fastify plugin configuration and CORS
@@ -148,6 +172,7 @@ bff-template/
 └── tests/
     ├── discover.test.ts        # Contract tests
     ├── health.test.ts          # Probe tests
-    └── ping.test.ts            # Network pathway tests
+    ├── ping.test.ts            # Network pathway tests
+    └── swagger.test.ts         # OpenAPI & Swagger UI tests
 ```
 

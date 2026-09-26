@@ -52,3 +52,4 @@ describe('OpenAPI / Swagger Documentation (/documentation)', () => {
     expect(res.headers['location']).toBe('/documentation');
   });
 });
+
