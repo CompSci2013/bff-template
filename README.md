@@ -18,7 +18,55 @@ This BFF template solves that problem on **Day 0**:
 
 ---
 
-## 2. API Surface & Pathway Verification
+## 2. Quick-Start Guide: From Running Swagger to Initial Angular Configuration
+
+> ⚡ **Quick Reference**: For a standalone printable copy, see [**Quick-Start Guide**](docs/QUICK-START.md).
+
+**Precondition**: The Fastify BFF is up and running. Swagger UI is accessible at `http://localhost:3000/documentation`.
+
+1. **Identify Your Target Domain**:
+   Open `http://localhost:3000/documentation`. Note your domain slug `<domain>` from the discover route (`/api/v1/<domain>/discover`).
+
+2. **Run the Scaffolder CLI**:
+   ```bash
+   npm run scaffold:domain -- --domain=<domain>
+   ```
+   *Creates in `src/domains/<domain>/`:*
+   - `<domain>.resource.ts` (`ResourceDefinition` Single Source of Truth)
+   - `<domain>.domain-config.ts` (Angular `provideDomainConfig()` provider)
+   - `<domain>.models.ts` (Canonical TypeScript models)
+
+3. **Copy to Frontend**:
+   ```bash
+   cp -r src/domains/<domain> /path/to/angular-app/src/app/domains/
+   ```
+
+4. **Curate `<domain>.resource.ts` (The 5-Point Edit)**:
+   - *Visibility & Widths*: Set `visible: false` on internal IDs/timestamps; assign explicit column widths (`width: '140px'`).
+   - *Filter Types*: Change text inputs to `autocomplete` or `multiselect` with `optionsEndpoint: '/api/v1/<domain>/pickers/<pickerId>'`.
+   - *Range Pairing*: Pair numeric boundaries (`<metric>Min`/`<metric>Max`) with identical `rangeField: '<metric>'` and `rangeRole: 'min' | 'max'`.
+   - *Anti-Corruption Seam*: Set `urlParam: '<cleanParam>'` to prevent legacy wire names from leaking into the browser URL.
+   - *Highlighting*: Set `highlightable: true` on fields participating in `h_*` keyword queries.
+
+5. **Provide in Angular Route**:
+   ```typescript
+   import { provideDomainConfig } from './domains/<domain>/<domain>.domain-config';
+
+   export const routes: Routes = [
+     {
+       path: '<domain>',
+       component: DiscoveryContainerComponent,
+       providers: [provideDomainConfig()]
+     }
+   ];
+   ```
+
+6. **Verify in Browser**:
+   Run `ng serve` and open `http://localhost:4200/<domain>`. Confirm dynamic table columns, filters, and search queries operate cleanly against the BFF.
+
+---
+
+## 3. API Surface & Pathway Verification
 
 | Method | Endpoint | Purpose |
 |---|---|---|
@@ -32,7 +80,7 @@ This BFF template solves that problem on **Day 0**:
 
 ---
 
-## 3. Frontend Developer Quick Guide: Using Swagger UI
+## 4. Frontend Developer Guide: Using Swagger UI
 
 Frontend developers (especially junior engineers) should use Swagger UI (`http://localhost:3000/documentation`) as an interactive development harness rather than manually guessing API contracts or hardcoding mock shapes.
 
@@ -51,11 +99,11 @@ Frontend developers (especially junior engineers) should use Swagger UI (`http:/
      npx openapi-typescript http://localhost:3000/documentation/json -o src/app/core/models/bff-contract.ts
      ```
 4. **Test Live in the UI**:
-   - Use the **Try it out** button with path parameter `domain: automobile` and query parameters `page: 1`, `pageSize: 10` to see real JSON payloads returned by Fastify.
+   - Use the **Try it out** button with path parameter `domain: <domain>` and query parameters `page: 1`, `pageSize: 10` to see real JSON payloads returned by Fastify.
 
 ---
 
-## 4. Quick Start & Local Execution
+## 5. Local Execution & Docker Swarm Deployment
 
 ### Local Development (Direct Node.js)
 ```bash
@@ -82,30 +130,22 @@ docker compose logs -f
 curl -i http://localhost:3000/api/v1/ping
 ```
 
----
+### Production Deployment: Docker Swarm
 
-## 5. Production Deployment: Docker Swarm
+This project is configured out-of-the-box for **Docker Swarm** environments with zero Kubernetes dependency:
 
-This project is configured out-of-the-box for **Docker Swarm** environments with zero Kubernetes dependency.
-
-### 1. Initialize Swarm (if not already active)
 ```bash
+# 1. Initialize Swarm (if not already active)
 docker swarm init
-```
 
-### 2. Deploy the Stack
-Deploy the BFF as a replicated, auto-healing swarm service on an overlay network:
-```bash
+# 2. Deploy the stack
 docker stack deploy -c docker-compose.yml bff
-```
 
-### 3. Verify Swarm Service & Rolling Updates
-```bash
-# Check running service replicas
+# 3. Inspect running replicas
 docker stack services bff
 docker service ps bff_bff
 
-# Zero-downtime rolling update when releasing a new image
+# 4. Zero-downtime rolling update when releasing a new image
 docker service update --image localhost/bff-template:v1.1.0 bff_bff
 ```
 
@@ -174,6 +214,7 @@ bff-template/
 ├── package.json                # Dependencies: Fastify 5, CORS, Cookies, Vitest
 ├── tsconfig.json               # TypeScript ES2022 / NodeNext configuration
 ├── docs/
+│   ├── QUICK-START.md                 # 6-step sequential quick-start guide
 │   ├── bff-template-handbook.md       # Operational handbook for brownfield standup
 │   └── swagger-guide-for-frontend.md  # Detailed guide for FE devs using Swagger
 ├── scripts/

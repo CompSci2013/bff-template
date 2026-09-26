@@ -576,6 +576,52 @@ To guarantee accurate scaffolding, `scaffold-domain-config.ts` uses the **Second
 
 ---
 
+### Quick-Start Guide: 6 Steps from Swagger to Initial Angular Configuration
+
+**Precondition**: The Fastify BFF is running with Swagger UI accessible at `http://localhost:3000/documentation`.
+
+1. **Identify Your Target Domain**:
+   Open `http://localhost:3000/documentation`. Note your domain slug `<domain>` from the discover route (`/api/v1/<domain>/discover`).
+
+2. **Run the Scaffolder CLI**:
+   ```bash
+   npm run scaffold:domain -- --domain=<domain>
+   ```
+   *Creates in `src/domains/<domain>/`:*
+   - `<domain>.resource.ts` (`ResourceDefinition` Single Source of Truth)
+   - `<domain>.domain-config.ts` (Angular `provideDomainConfig()` provider)
+   - `<domain>.models.ts` (Canonical TypeScript models)
+
+3. **Copy to Frontend**:
+   ```bash
+   cp -r src/domains/<domain> /path/to/angular-app/src/app/domains/
+   ```
+
+4. **Curate `<domain>.resource.ts` (The 5-Point Edit)**:
+   - *Visibility & Widths*: Set `visible: false` on internal IDs/timestamps; assign explicit column widths (`width: '140px'`).
+   - *Filter Types*: Change text inputs to `autocomplete` or `multiselect` with `optionsEndpoint: '/api/v1/<domain>/pickers/<pickerId>'`.
+   - *Range Pairing*: Pair numeric boundaries (`<metric>Min`/`<metric>Max`) with identical `rangeField: '<metric>'` and `rangeRole: 'min' | 'max'`.
+   - *Anti-Corruption Seam*: Set `urlParam: '<cleanParam>'` to prevent legacy wire names from leaking into the browser URL.
+   - *Highlighting*: Set `highlightable: true` on fields participating in `h_*` keyword queries.
+
+5. **Provide in Angular Route**:
+   ```typescript
+   import { provideDomainConfig } from './domains/<domain>/<domain>.domain-config';
+
+   export const routes: Routes = [
+     {
+       path: '<domain>',
+       component: DiscoveryContainerComponent,
+       providers: [provideDomainConfig()]
+     }
+   ];
+   ```
+
+6. **Verify in Browser**:
+   Run `ng serve` and open `http://localhost:4200/<domain>`. Confirm dynamic table columns, filters, and search queries operate cleanly against the BFF.
+
+---
+
 ### The 5-Point Human Architectural Audit Protocol
 
 Immediately after running `npm run scaffold:domain`, the engineer **MUST** open the generated `<domain>.resource.ts` file and execute the 5-point curation protocol before wiring components:
@@ -583,9 +629,9 @@ Immediately after running `npm run scaffold:domain`, the engineer **MUST** open 
 ```typescript
 // src/domains/<domain>/<domain>.resource.ts
 
-export const AUTOMOBILE_RESOURCE: ResourceDefinition = {
-  name: 'automobile',
-  label: 'Automobile Discovery',
+export const <DOMAIN>_RESOURCE: ResourceDefinition = {
+  name: '<domain>',
+  label: '<Domain Title> Discovery',
   // ...
   fields: [
     // ─────────────────────────────────────────────────────────────────────────
@@ -594,21 +640,21 @@ export const AUTOMOBILE_RESOURCE: ResourceDefinition = {
     // Collapses two wire parameters into a single user-facing range slider.
     // ─────────────────────────────────────────────────────────────────────────
     {
-      name: 'priceMin',
-      label: 'Price Min',
+      name: '<metric>Min',
+      label: '<Metric> Min',
       type: 'number',
       filterable: true,
       filterType: 'range',
-      rangeField: 'price',
+      rangeField: '<metric>',
       rangeRole: 'min'
     },
     {
-      name: 'priceMax',
-      label: 'Price Max',
+      name: '<metric>Max',
+      label: '<Metric> Max',
       type: 'number',
       filterable: true,
       filterType: 'range',
-      rangeField: 'price',
+      rangeField: '<metric>',
       rangeRole: 'max'
     },
 
@@ -624,8 +670,8 @@ export const AUTOMOBILE_RESOURCE: ResourceDefinition = {
       sortable: false
     },
     {
-      name: 'title',
-      label: 'Vehicle Description',
+      name: '<primaryTitleField>',
+      label: '<Title Label>',
       type: 'string',
       visible: true,
       sortable: true,
@@ -638,12 +684,12 @@ export const AUTOMOBILE_RESOURCE: ResourceDefinition = {
     // Elevate plain text inputs to catalog-driven autocompletes or multiselects.
     // ─────────────────────────────────────────────────────────────────────────
     {
-      name: 'make',
-      label: 'Manufacturer',
+      name: '<catalogField>',
+      label: '<Catalog Label>',
       type: 'string',
       filterable: true,
       filterType: 'multiselect',
-      optionsEndpoint: '/api/v1/automobile/pickers/makes'
+      optionsEndpoint: '/api/v1/<domain>/pickers/<pickerId>'
     },
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -651,12 +697,12 @@ export const AUTOMOBILE_RESOURCE: ResourceDefinition = {
     // Map client URL parameters to wire parameters to prevent contract churn.
     // ─────────────────────────────────────────────────────────────────────────
     {
-      name: 'category',
-      label: 'Body Style',
+      name: '<wireParameter>',
+      label: '<Field Label>',
       type: 'string',
       filterable: true,
-      urlParam: 'bodyStyle',     // Client URL: ?bodyStyle=suv
-      apiParam: 'category'       // Upstream Wire: ?category=suv
+      urlParam: '<cleanClientUrlParam>',   // Client URL: ?<cleanClientUrlParam>=val
+      apiParam: '<wireParameter>'          // Upstream Wire: ?<wireParameter>=val
     },
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -664,8 +710,8 @@ export const AUTOMOBILE_RESOURCE: ResourceDefinition = {
     // Enable fields that participate in the 'h_*' highlight query channel.
     // ─────────────────────────────────────────────────────────────────────────
     {
-      name: 'model',
-      label: 'Model Name',
+      name: '<searchableField>',
+      label: '<Searchable Label>',
       type: 'string',
       highlightable: true
     }
@@ -679,13 +725,13 @@ export const AUTOMOBILE_RESOURCE: ResourceDefinition = {
 
 ```bash
 # Scaffolding via running Fastify instance (default: localhost:3000)
-npm run scaffold:domain -- --domain=inventory
+npm run scaffold:domain -- --domain=<domain>
 
 # Scaffolding via explicit remote Swagger URL
-npm run scaffold:domain -- --domain=order --url=http://api.staging.internal/documentation/json
+npm run scaffold:domain -- --domain=<domain> --url=http://<host>:<port>/documentation/json
 
 # Scaffolding via static OpenAPI specification file
-npm run scaffold:domain -- --domain=customer --spec=./specs/customer-api.json --out=./src/domains
+npm run scaffold:domain -- --domain=<domain> --spec=./specs/<api-spec>.json --out=./src/domains
 ```
 
 ---
@@ -729,6 +775,6 @@ npm test
 ### Check 6: Domain Configuration Scaffolder Baseline
 In the BFF project:
 ```bash
-npm run scaffold:domain -- --domain=automobile
+npm run scaffold:domain -- --domain=<domain>
 ```
-*Expected*: Discovers contract fields via OpenAPI/Second Witness, generates baseline `automobile.resource.ts`, `automobile.domain-config.ts`, and `automobile.models.ts`, and outputs the 30/70 curation warning.
+*Expected*: Discovers contract fields via OpenAPI/Second Witness, generates baseline `<domain>.resource.ts`, `<domain>.domain-config.ts`, and `<domain>.models.ts`, and outputs the 30/70 curation warning.

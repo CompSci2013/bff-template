@@ -40,7 +40,7 @@ interface CliArgs {
 
 function parseArgs(): CliArgs {
   const args: CliArgs = {
-    domain: 'automobile',
+    domain: '',
     url: 'http://localhost:3000/documentation/json',
     outDir: './src/domains'
   };
@@ -55,6 +55,12 @@ function parseArgs(): CliArgs {
     } else if (arg.startsWith('--out=')) {
       args.outDir = arg.split('=')[1].trim();
     }
+  }
+
+  if (!args.domain) {
+    console.error('\n[Error]: Missing required argument --domain=<domainName>');
+    console.error('Usage: npm run scaffold:domain -- --domain=<domainName> [--url=<swaggerJsonUrl>] [--out=<outputDir>]\n');
+    process.exit(1);
   }
 
   return args;
