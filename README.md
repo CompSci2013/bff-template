@@ -22,33 +22,64 @@ This BFF template solves that problem on **Day 0**:
 
 > ⚡ **Quick Reference**: For a standalone printable copy, see [**Quick-Start Guide**](docs/QUICK-START.md).
 
-**Precondition**: The Fastify BFF is up and running. Swagger UI is accessible at `http://localhost:3000/documentation`.
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                        THE CONTRACT FENCE                              │
+├───────────────────────────────────┬────────────────────────────────────┤
+│         BFF REPO (Producer)       │      ANGULAR REPO (Consumer)       │
+├───────────────────────────────────┼────────────────────────────────────┤
+│ • Serves Swagger / OpenAPI 3.1    │ • Consumes BFF HTTP endpoints      │
+│   (http://localhost:3000/         │                                    │
+│    documentation/json)            │                                    │
+│                                   │                                    │
+│ • Runs: `scaffold:domain`         │ • Runs: `openapi-typescript`       │
+│   Generates: UI CONFIG FILES      │   Generates: WIRE CONTRACT TYPES   │
+│   (`<domain>.resource.ts`,        │   (`bff-contract.ts`)              │
+│    `<domain>.domain-config.ts`)   │                                    │
+│                                   │                                    │
+│   What it produces:               │   What it produces:                │
+│   Table columns, filter widgets,  │   Raw network interfaces:          │
+│   ranges, pickers, and labels.    │   `PingResponse`, `CanonicalRecord`│
+└───────────────────────────────────┴────────────────────────────────────┘
+```
 
-1. **Identify Your Target Domain**:
-   Open `http://localhost:3000/documentation`. Note your domain slug `<domain>` from the discover route (`/api/v1/<domain>/discover`).
+**Precondition**: The Fastify BFF is up and running (`npm run dev`) with Swagger UI accessible at `http://localhost:3000/documentation`.
 
-2. **Run the Scaffolder CLI**:
+Follow these 7 numbered steps in exact chronological order, noting the repository location for each step:
+
+1. **Step 1 [Location: BFF Repository] — Identify Your Target Domain**:  
+   Open `http://localhost:3000/documentation` in your browser. Locate the entity endpoint you need to configure (e.g., `GET /api/v1/{domain}/discover`). Note your domain slug: `<domain>` (e.g. `orders`, `claims`, `patients`, `inventory`, `policies`).
+
+2. **Step 2 [Location: Angular Application] — Generate Network Wire Types (`openapi-typescript`)**:  
+   In your **Angular application** root terminal, generate compile-time TypeScript interfaces directly from the BFF's OpenAPI schema:
+   ```bash
+   npx openapi-typescript http://localhost:3000/documentation/json -o src/app/core/models/bff-contract.ts
+   ```
+   *Why here:* Angular is the consumer. This creates compile-time TypeScript types (`DiscoverPayload`, `CanonicalRecord`, `PingResponse`) so `HttpClient` services are 100% type-safe against the backend wire contract.
+
+3. **Step 3 [Location: BFF Repository] — Scaffold Initial Domain Configuration (`scaffold:domain`)**:  
+   Switch to your **BFF repository** terminal. Run the contract harvester for your domain:
    ```bash
    npm run scaffold:domain -- --domain=<domain>
    ```
-   *Creates in `src/domains/<domain>/`:*
-   - `<domain>.resource.ts` (`ResourceDefinition` Single Source of Truth)
-   - `<domain>.domain-config.ts` (Angular `provideDomainConfig()` provider)
-   - `<domain>.models.ts` (Canonical TypeScript models)
+   *Creates in `src/domains/<domain>/`:* `<domain>.resource.ts` (ResourceDefinition), `<domain>.domain-config.ts` (Angular DI provider), and `<domain>.models.ts`.
 
-3. **Copy to Frontend**:
+4. **Step 4 [Location: Filesystem Transfer] — Copy Domain Configs to Angular**:  
+   Copy the generated domain directory from the BFF into your Angular application:
    ```bash
-   cp -r src/domains/<domain> /path/to/angular-app/src/app/domains/
+   cp -r /path/to/bff-template/src/domains/<domain> /path/to/angular-app/src/app/domains/
    ```
 
-4. **Curate `<domain>.resource.ts` (The 5-Point Edit)**:
-   - *Visibility & Widths*: Set `visible: false` on internal IDs/timestamps; assign explicit column widths (`width: '140px'`).
-   - *Filter Types*: Change text inputs to `autocomplete` or `multiselect` with `optionsEndpoint: '/api/v1/<domain>/pickers/<pickerId>'`.
+5. **Step 5 [Location: Angular Application] — Curate `<domain>.resource.ts` (The 5-Point Edit)**:  
+   In your **Angular application**, open `src/app/domains/<domain>/<domain>.resource.ts`. The script provides a ~30–35% baseline; you must now apply the remaining 65–70% human business decisions:
+   - *Visibility & Widths*: Set `visible: false` on internal keys/UUIDs; assign explicit column widths (`width: '140px'`).
+   - *Filter Types*: Change text inputs to `'autocomplete'` or `'multiselect'` with `optionsEndpoint: '/api/v1/<domain>/pickers/<pickerId>'`.
    - *Range Pairing*: Pair numeric boundaries (`<metric>Min`/`<metric>Max`) with identical `rangeField: '<metric>'` and `rangeRole: 'min' | 'max'`.
    - *Anti-Corruption Seam*: Set `urlParam: '<cleanParam>'` to prevent legacy wire names from leaking into the browser URL.
    - *Highlighting*: Set `highlightable: true` on fields participating in `h_*` keyword queries.
 
-5. **Provide in Angular Route**:
+6. **Step 6 [Location: Angular Application] — Register Domain in Angular Routes**:  
+   In your **Angular application** routing configuration (`routes.ts` or component):
    ```typescript
    import { provideDomainConfig } from './domains/<domain>/<domain>.domain-config';
 
@@ -61,8 +92,8 @@ This BFF template solves that problem on **Day 0**:
    ];
    ```
 
-6. **Verify in Browser**:
-   Run `ng serve` and open `http://localhost:4200/<domain>`. Confirm dynamic table columns, filters, and search queries operate cleanly against the BFF.
+7. **Step 7 [Location: Angular Application] — Verify in Browser**:  
+   In your **Angular application** terminal, run `ng serve` and open `http://localhost:4200/<domain>`. Confirm dynamic table columns, filters, and search queries operate cleanly against the BFF.
 
 ---
 
