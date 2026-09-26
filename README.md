@@ -22,6 +22,8 @@ This BFF template solves that problem on **Day 0**:
 
 | Method | Endpoint | Purpose |
 |---|---|---|
+| `GET` | `/documentation` | **Interactive Swagger UI**: Visual testing, parameter playground, and contract schema browser. |
+| `GET` | `/documentation/json` | **OpenAPI 3.1 JSON**: Machine-readable specification for automated parity testing and type generation. |
 | `GET` | `/healthz` | Container liveness check for Docker daemon and Swarm scheduler. |
 | `GET` | `/api/v1/health` | Readiness probe reporting uptime, operational mode, and upstream reachability. |
 | `GET` | `/api/v1/ping` | **Pathway probe**: Echoes caller IP, User-Agent, Origin, and cookies to verify connectivity. |

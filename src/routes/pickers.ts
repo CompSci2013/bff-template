@@ -5,7 +5,21 @@ import { getPickerStub } from '../stubs/pickers.stub.js';
 import { PickerPayload } from '../types/canonical.js';
 
 export const pickerRoutes: FastifyPluginAsync = async (app) => {
-  app.get('/api/v1/:domain/pickers/:id', async (req, reply) => {
+  app.get('/api/v1/:domain/pickers/:id', {
+    schema: {
+      tags: ['Modal Pickers'],
+      summary: 'Picker Loop modal options catalog',
+      description: 'Provides isolated option catalogs for modal dialogs (such as Trim Level Pickers) without polluting the Page Loop.',
+      params: {
+        type: 'object',
+        properties: {
+          domain: { type: 'string', description: 'Target domain' },
+          id: { type: 'string', description: 'Picker catalog identifier (e.g. 1 for trim levels, 2 for powertrain)' }
+        },
+        required: ['domain', 'id']
+      }
+    }
+  }, async (req, reply) => {
     const { domain, id } = req.params as { domain: string; id: string };
 
     // MODE 1: STUB MODE (Day 0 / Day 1)
@@ -49,4 +63,3 @@ export const pickerRoutes: FastifyPluginAsync = async (app) => {
     }
   });
 };
-

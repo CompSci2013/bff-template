@@ -2,6 +2,8 @@
 import Fastify, { FastifyInstance } from 'fastify';
 import cors from '@fastify/cors';
 import cookie from '@fastify/cookie';
+import swagger from '@fastify/swagger';
+import swaggerUi from '@fastify/swagger-ui';
 import { env } from './config/env.js';
 import { healthRoutes } from './routes/health.js';
 import { pingRoutes } from './routes/ping.js';
@@ -38,7 +40,44 @@ export async function buildApp(): Promise<FastifyInstance> {
 
   await app.register(cookie);
 
-  // Register Routes
+  // OpenAPI / Swagger Specification Registration
+  await app.register(swagger, {
+    openapi: {
+      info: {
+        title: 'BFF Microservice Gateway',
+        description: 'Canonical Fastify Backend-for-Frontend (BFF) template for brownfield application modernization.',
+        version: '1.0.0'
+      },
+      servers: [
+        {
+          url: `http://localhost:${env.port}`,
+          description: 'Local Development Server'
+        }
+      ],
+      tags: [
+        { name: 'Pathway Verification', description: 'Network connectivity, CORS, and cookie verification probes for Day 0' },
+        { name: 'Health & Diagnostics', description: 'Docker Swarm container liveness and upstream readiness checks' },
+        { name: 'Discovery & Analytics', description: 'The Page Loop: canonical 9-spine records, total counts, and facet aggregations' },
+        { name: 'Modal Pickers', description: 'The Picker Loop: isolated secondary selection dialog catalogs' }
+      ]
+    }
+  });
+
+  // Interactive Swagger UI
+  await app.register(swaggerUi, {
+    routePrefix: '/documentation',
+    uiConfig: {
+      docExpansion: 'list',
+      deepLinking: false
+    }
+  });
+
+  // Root and docs redirect to /documentation
+  app.get('/docs', async (_req, reply) => {
+    return reply.redirect('/documentation');
+  });
+
+  // Register Application Routes
   await app.register(healthRoutes);
   await app.register(pingRoutes);
   await app.register(discoverRoutes);
@@ -46,4 +85,3 @@ export async function buildApp(): Promise<FastifyInstance> {
 
   return app;
 }
-

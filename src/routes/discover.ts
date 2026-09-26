@@ -6,7 +6,32 @@ import { getAutomobileStub } from '../stubs/automobile.stub.js';
 import { DiscoverPayload } from '../types/canonical.js';
 
 export const discoverRoutes: FastifyPluginAsync = async (app) => {
-  app.get('/api/v1/:domain/discover', async (req, reply) => {
+  app.get('/api/v1/:domain/discover', {
+    schema: {
+      tags: ['Discovery & Analytics'],
+      summary: 'Page Loop discovery endpoint (records, facets, and metrics)',
+      description: 'The canonical analytical read endpoint. In stub mode, returns pristine 9-Spine records. In hydrated mode, aggregates live upstream services with single-flight coalescing.',
+      params: {
+        type: 'object',
+        properties: {
+          domain: { type: 'string', description: 'Target domain (e.g. automobile, train, plane)' }
+        },
+        required: ['domain']
+      },
+      querystring: {
+        type: 'object',
+        properties: {
+          page: { type: 'integer', default: 1, description: 'Page number (1-indexed)' },
+          size: { type: 'integer', default: 25, description: 'Page size' },
+          q: { type: 'string', description: 'Free-text search query' },
+          make: { type: 'string', description: 'Manufacturer filter' },
+          category: { type: 'string', description: 'Body class / vehicle category filter' },
+          sort: { type: 'string', description: 'Sort column field' },
+          order: { type: 'string', enum: ['asc', 'desc'], description: 'Sort direction' }
+        }
+      }
+    }
+  }, async (req, reply) => {
     const { domain } = req.params as { domain: string };
     const query = req.query as Record<string, string>;
     const coalescingKey = `discover:${domain}:${JSON.stringify(query)}`;
@@ -59,4 +84,3 @@ export const discoverRoutes: FastifyPluginAsync = async (app) => {
     return reply.status(200).send(payload);
   });
 };
-

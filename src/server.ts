@@ -8,9 +8,10 @@ async function start() {
   try {
     const address = await app.listen({ port: env.port, host: env.host });
     app.log.info(`🚀 BFF Microservice running at ${address} in [${env.bffMode.toUpperCase()}] mode`);
-    app.log.info(`📡 Pathway Verification: ${address}/api/v1/ping`);
-    app.log.info(`🩺 Health Probe:        ${address}/healthz`);
-    app.log.info(`🔎 Discovery Endpoint:   ${address}/api/v1/:domain/discover`);
+    app.log.info(`📖 Interactive Swagger UI: ${address}/documentation`);
+    app.log.info(`📡 Pathway Verification:  ${address}/api/v1/ping`);
+    app.log.info(`🩺 Health Probe:         ${address}/healthz`);
+    app.log.info(`🔎 Discovery Endpoint:    ${address}/api/v1/:domain/discover`);
   } catch (err) {
     app.log.error(err);
     process.exit(1);
@@ -18,4 +19,3 @@ async function start() {
 }
 
 start();
-

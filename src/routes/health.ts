@@ -8,12 +8,47 @@ const startTime = Date.now();
 
 export const healthRoutes: FastifyPluginAsync = async (app) => {
   // Simple Liveness Probe for Docker / Swarm healthcheck
-  app.get('/healthz', async (_req, reply) => {
+  app.get('/healthz', {
+    schema: {
+      tags: ['Health & Diagnostics'],
+      summary: 'Container liveness probe',
+      description: 'Used by Docker daemon and Swarm scheduler to check container liveness.',
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            status: { type: 'string' }
+          }
+        }
+      }
+    }
+  }, async (_req, reply) => {
     return reply.status(200).send({ status: 'ok' });
   });
 
   // Comprehensive Readiness & Diagnostics Probe
-  app.get('/api/v1/health', async (_req, reply) => {
+  app.get('/api/v1/health', {
+    schema: {
+      tags: ['Health & Diagnostics'],
+      summary: 'Comprehensive readiness and upstream diagnostics probe',
+      description: 'Reports uptime, operational mode (stub/hybrid/live), and live upstream service reachability.',
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            status: { type: 'string' },
+            mode: { type: 'string' },
+            uptimeSeconds: { type: 'number' },
+            timestamp: { type: 'string' },
+            upstreams: {
+              type: 'object',
+              additionalProperties: { type: 'string' }
+            }
+          }
+        }
+      }
+    }
+  }, async (_req, reply) => {
     const upstreams: Record<string, 'reachable' | 'unreachable' | 'stubbed'> = {};
 
     if (env.bffMode === 'stub') {
@@ -42,4 +77,3 @@ export const healthRoutes: FastifyPluginAsync = async (app) => {
     return reply.status(200).send(payload);
   });
 };
-
