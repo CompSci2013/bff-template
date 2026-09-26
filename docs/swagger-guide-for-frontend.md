@@ -326,3 +326,4 @@ If an Angular request fails with a 400 or 500 status code:
    curl -X 'GET' 'http://localhost:3000/api/v1/automobile/discover?page=1' -H 'accept: application/json'
    ```
 4. If the curl command succeeds in your terminal, the issue is on the Angular frontend (e.g. parameter serialization, missing headers, or CORS). If curl fails, the issue is on the BFF.
+

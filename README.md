@@ -36,7 +36,8 @@ This BFF template solves that problem on **Day 0**:
 
 Frontend developers (especially junior engineers) should use Swagger UI (`http://localhost:3000/documentation`) as an interactive development harness rather than manually guessing API contracts or hardcoding mock shapes.
 
-> 📖 **Full Guide**: For detailed walkthroughs, parameter breakdowns, Angular `HttpClient` code samples, and automated TypeScript contract generation, see [**Frontend Developer Guide: Swagger UI & OpenAPI**](docs/swagger-guide-for-frontend.md).
+> 📖 **Frontend Swagger Guide**: For detailed walkthroughs, parameter breakdowns, Angular `HttpClient` code samples, and automated TypeScript contract generation, see [**Frontend Developer Guide: Swagger UI & OpenAPI**](docs/swagger-guide-for-frontend.md).
+> 📘 **Applied Handbook**: For the comprehensive operational runbook on standing up this microservice in Docker Swarm and brownfield environments, see [**BFF Template Applied: The Day-0 Gateway Handbook**](docs/bff-template-handbook.md).
 
 ### The 4-Step Frontend Workflow
 
@@ -150,6 +151,7 @@ bff-template/
 ├── package.json                # Dependencies: Fastify 5, CORS, Cookies, Vitest
 ├── tsconfig.json               # TypeScript ES2022 / NodeNext configuration
 ├── docs/
+│   ├── bff-template-handbook.md       # Operational handbook for brownfield standup
 │   └── swagger-guide-for-frontend.md  # Detailed guide for FE devs using Swagger
 ├── src/
 │   ├── server.ts               # Process bootstrap and port binding
