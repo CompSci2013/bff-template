@@ -29,6 +29,36 @@ export const discoverRoutes: FastifyPluginAsync = async (app) => {
           sort: { type: 'string', description: 'Sort column field' },
           order: { type: 'string', enum: ['asc', 'desc'], description: 'Sort direction' }
         }
+      },
+      response: {
+        200: {
+          description: 'Canonical discovery records, pagination metadata, and facets',
+          type: 'object',
+          properties: {
+            domain: { type: 'string', description: 'Context domain' },
+            results: {
+              type: 'array',
+              description: 'Array of canonical records matching current query',
+              items: {
+                type: 'object',
+                additionalProperties: true
+              }
+            },
+            total: { type: 'integer', description: 'Total matching records across all pages' },
+            page: { type: 'integer', description: 'Current page index (1-indexed)' },
+            pageSize: { type: 'integer', description: 'Page size' },
+            facets: {
+              type: 'object',
+              description: 'Faceted filter buckets with counts',
+              additionalProperties: true
+            },
+            statistics: {
+              type: 'object',
+              description: 'Domain summary statistics and metrics',
+              additionalProperties: true
+            }
+          }
+        }
       }
     }
   }, async (req, reply) => {
