@@ -56,3 +56,4 @@ describe('BFF Discovery Contract (/api/v1/:domain/discover)', () => {
     expect(body.results[0].manufacturer).toBe('Toyota');
   });
 });
+

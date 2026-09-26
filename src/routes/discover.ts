@@ -59,3 +59,4 @@ export const discoverRoutes: FastifyPluginAsync = async (app) => {
     return reply.status(200).send(payload);
   });
 };
+

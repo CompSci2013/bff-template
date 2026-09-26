@@ -24,3 +24,4 @@ export const pingRoutes: FastifyPluginAsync = async (app) => {
     });
   });
 };
+

@@ -46,3 +46,4 @@ export function getPickerStub(id: string, domain = 'automobile'): PickerPayload 
     ]
   };
 }
+

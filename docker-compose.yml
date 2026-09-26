@@ -54,3 +54,4 @@ networks:
   bff-net:
     driver: overlay
     attachable: true
+

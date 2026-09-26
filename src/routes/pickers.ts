@@ -49,3 +49,4 @@ export const pickerRoutes: FastifyPluginAsync = async (app) => {
     }
   });
 };
+

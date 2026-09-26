@@ -29,3 +29,4 @@ export const env: EnvConfig = {
   upstreamPicker1ApiUrl: process.env['UPSTREAM_PICKER1_API_URL'] ?? 'http://picker1-api.internal',
   upstreamPicker2ApiUrl: process.env['UPSTREAM_PICKER2_API_URL'] ?? 'http://picker2-api.internal',
 };
+

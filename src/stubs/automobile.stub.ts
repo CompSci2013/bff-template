@@ -140,3 +140,4 @@ export function getAutomobileStub(query: Record<string, any> = {}): DiscoverPayl
     }
   };
 }
+

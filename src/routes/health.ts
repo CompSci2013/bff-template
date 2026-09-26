@@ -42,3 +42,4 @@ export const healthRoutes: FastifyPluginAsync = async (app) => {
     return reply.status(200).send(payload);
   });
 };
+

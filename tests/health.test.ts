@@ -38,3 +38,4 @@ describe('BFF Health & Probes (/healthz, /api/v1/health)', () => {
     expect(body.upstreams['main-api']).toBe('stubbed');
   });
 });
+

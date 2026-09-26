@@ -52,3 +52,4 @@ export interface HealthStatus {
   timestamp: string;
   upstreams: Record<string, 'reachable' | 'unreachable' | 'stubbed'>;
 }
+

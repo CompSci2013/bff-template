@@ -46,3 +46,4 @@ describe('BFF Pathway Verification (/api/v1/ping)', () => {
     expect(body.cookiesReceived).toBe(true);
   });
 });
+
