@@ -142,7 +142,30 @@ To hydrate a domain (e.g. `automobile`) with real upstream data:
 
 ---
 
-## 7. Directory Layout
+## 7. Domain Configuration Scaffolding (The 30/70 Baseline)
+
+The repository includes a domain-agnostic contract harvester for generating Angular configuration families from OpenAPI / Swagger endpoints:
+
+```bash
+npm run scaffold:domain -- --domain=<domainName>
+```
+
+### The 30/70 Law: Automation vs. Architectural Curation
+Automated tools cannot build user interfaces on their own. In accordance with Volumes 2 & 3 of the architectural canon:
+- **What is Automated (~30–35% mechanical baseline)**: The script queries the live Swagger endpoint and probes live Fastify responses ("Second Witness") to extract property names, primitive scalar types, algorithmic range pairing (`min`/`max`), and generates `ResourceDefinition`, `DomainConfig`, and TypeScript model ASTs.
+- **What Requires Human Curation (~65–70% architectural effort)**: An API schema does not define user interaction models. Engineers must complete the **5-Point Human Architectural Audit**:
+  1. **Range Pairing Audit**: Ensure paired min/max fields share `rangeField` and `rangeRole`.
+  2. **Table Visibility & Widths**: Hide technical IDs/timestamps (`visible: false`), assign explicit widths (`width: '180px'`), and determine row expansion cardinality.
+  3. **Filter Control Types**: Elevate plain text filters to `autocomplete` or `multiselect` with catalog endpoints.
+  4. **The Anti-Corruption Seam**: Map client URL parameters (`urlParam`) to backend wire parameters (`apiParam`) to protect browser state from backend churn.
+  5. **Highlighting Channel**: Configure `highlightable: true` for fields participating in `h_*` query highlighting.
+- **Pickers (Family 3) & Charts (Family 4)**: Modal search-and-select workflows and analytical chart aggregations are **0% automated** from discovery schemas and must be authored by domain engineers.
+
+> 📘 **Full Architectural Breakdown**: For the exhaustive 4-Family Reality Audit Table, Weighted Labor Distribution, and the 5-point curation protocol, see [**BFF Template Applied Handbook §27**](docs/bff-template-handbook.md#27--domain-configuration-scaffolding-the-3070-reality).
+
+---
+
+## 8. Directory Layout
 
 ```
 bff-template/
@@ -153,6 +176,8 @@ bff-template/
 ├── docs/
 │   ├── bff-template-handbook.md       # Operational handbook for brownfield standup
 │   └── swagger-guide-for-frontend.md  # Detailed guide for FE devs using Swagger
+├── scripts/
+│   └── scaffold-domain-config.ts      # Universal Day-0 contract harvester & scaffolder
 ├── src/
 │   ├── server.ts               # Process bootstrap and port binding
 │   ├── app.ts                  # Fastify plugin configuration and CORS
@@ -170,7 +195,8 @@ bff-template/
 │   │   ├── automobile.stub.ts  # 9-Spine stub data and facet generator
 │   │   └── pickers.stub.ts     # Modal catalog stub options
 │   └── types/
-│       └── canonical.ts        # Shared contract interfaces
+│   │   └── canonical.ts        # Shared contract interfaces
+│   └── domains/                # Scaffolding target directory for generated domains
 └── tests/
     ├── discover.test.ts        # Contract tests
     ├── health.test.ts          # Probe tests

@@ -492,9 +492,207 @@ docker service update --image localhost/bff-template:v1.1.0 bff_bff
 
 ---
 
+## 27 · Domain Configuration Scaffolding: The 30/70 Reality
+### Automated Scaffolding as an Architectural Floor, Not a Finished Product
+
+In Volumes 2 and 3 of the architectural canon, modern Angular frontends achieve 100% domain-blind component reuse through the **Four Narrow Config Families** (*Vol 2 Ch 06-02*) and the single source of truth defined in the **ResourceDefinition** (*Vol 3 Ch 04-01*). 
+
+To accelerate brownfield migrations, the BFF template includes an automated Day-0 Contract Harvester:
+```bash
+npm run scaffold:domain -- --domain=<domainName>
+```
+
+> [!CAUTION]
+> **The Myth of the 80% Automated Scaffolder**:
+> Junior engineers and hasty project managers often look at code generation tools and assume they deliver "80% or 95% complete configuration." **This is a dangerous delusion that causes critical architectural defects.**
+>
+> In reality, automated contract introspection provides a **~30% to 35% mechanical baseline**. The remaining **65% to 70% of domain effort requires deliberate human architectural curation**.
+>
+> An API contract (Swagger/OpenAPI) describes *transport boundaries*, not *user interaction boundaries*. A compiler can parse field names and JSON datatypes, but it cannot infer user search workflows, column priorities, anti-corruption aliases, modal picker loops, or analytical metrics. Treat the scaffolder as a **floor**, never as a finished product.
+
+---
+
+### The 4-Family Reality Audit
+
+To understand why automated scaffolding covers only ~30–35% of the total domain implementation, examine what can be mechanically extracted from an API contract versus what requires human architectural decisions:
+
+| Config Family | Automated by Script (~30–35%) | Requires Human Architectural Curation (~65–70%) | Net Automation |
+|---|---|---|---|
+| **Family 1: Filters**<br>*(Vol 2 Ch 06-02)* | • Query parameter names<br>• Primitive scalar datatypes (`string`, `number`, `boolean`, `date`)<br>• Basic text/number inputs<br>• Algorithmic range pairing heuristics (`fooMin`/`fooMax`, `min_foo`/`max_foo`) | • Widget selection: which fields are `autocomplete`, `multiselect`, `select`, or `range`<br>• Dynamic catalog endpoints (`optionsEndpoint`, `autocompleteEndpoint`)<br>• Human-friendly labels and placeholders<br>• Separation into primary toolbar vs drawer filters<br>• Array serialization format (CSV, pipe, or repeated keys) | **~40%** |
+| **Family 2: Table Columns**<br>*(Vol 2 Ch 06-02)* | • Discovered attributes as column candidates<br>• Column sortable flags<br>• Basic data formatting types (`numeric`, `date`, `text`)<br>• Primary entity key (`dataKey: 'id'`) | • Column visibility: hiding technical IDs, UUIDs, audit timestamps (`visible: false`)<br>• Responsive column widths (`width: '120px'`, `'240px'`)<br>• Sticky column pinning and display priority<br>• **Row expansion cardinality**: determining whether row detail is a 1:1 local projection or a 1:many sub-resource fetch | **~60%** |
+| **Family 3: Modal Pickers**<br>*(Vol 2 Ch 06-02)* | • **Zero automation possible**.<br>A discovery endpoint exposes flat entity records, not secondary search-and-select workflows. | • Modal picker catalog endpoints (`/api/v1/:domain/pickers/:id`)<br>• Multi-domain foreign key resolution dialogs<br>• Modal search filters, selection modes (single vs multi), and selection chips | **0%** |
+| **Family 4: Analytical Charts**<br>*(Vol 2 Ch 06-02)* | • **Zero automation possible**.<br>An entity contract defines individual records, not analytical aggregations. | • Metric selection (sums, averages, counts)<br>• Visualization widget type (bar, donut, time-series)<br>• Facet bucket dimensions and cross-filtering interactions | **0%** |
+| **The Anti-Corruption Seam**<br>*(Vol 3 Ch 04-01)* | • Defaults wire parameters to identity (`urlParam = apiParam`). | • Defining `urlParam` aliases to insulate client state and URL bookmarkability from legacy backend parameter churn and naming inconsistencies | **0%** |
+| **Mechanical Boilerplate** | • TypeScript interfaces for domain models<br>• `ResourceDefinition` object AST<br>• Angular `DOMAIN_CONFIG` injection token wiring<br>• Pagination and sorting parameter binding | • Verifying DI module scoping and type safety | **~90%** |
+
+---
+
+### The Weighted Labor Distribution
+
+When evaluating the true engineering labor required to stand up a new domain in a brownfield application, the effort naturally partitions into three distinct phases:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    TOTAL DOMAIN IMPLEMENTATION LABOR                        │
+├──────────────────────────────┬──────────────────────────────┬───────────────┤
+│ PHASE A: Mechanical Baseline │ PHASE B: Semantic Curation   │ PHASE C: UX   │
+│ (Transcription & AST Syntax) │ (Anti-Corruption & Semantics)│ (Workflows)   │
+│ ~30% of Total Effort         │ ~35% of Total Effort         │ ~35% of Total │
+├──────────────────────────────┼──────────────────────────────┼───────────────┤
+│    100% AUTOMATED            │        0% AUTOMATED          │  0% AUTOMATED │
+│  (scaffold-domain-config)    │     (Human Architect)        │ (Human Dev)   │
+└──────────────────────────────┴──────────────────────────────┴───────────────┘
+```
+
+1. **Phase A: Mechanical Transcription (~30% of total effort — 100% Automated)**:
+   - Extracting 20–50 property names without spelling errors or casing mismatches.
+   - Parsing OpenAPI schemas and probing live Fastify wire payloads ("Second Witness").
+   - Generating `ResourceDefinition`, `DomainConfig`, and TypeScript model ASTs.
+   - **Value**: Eliminates the "blank page problem", guarantees structural conformance with the textbook architecture, and saves 2–4 hours of rote typing.
+
+2. **Phase B: Semantic Curation & Anti-Corruption (~35% of total effort — 0% Automated)**:
+   - Human reasoning guided by business rules and backend reality.
+   - Deciding which 8 columns out of 35 should be visible by default in the grid.
+   - Identifying catalog-backed filters and wiring their lookup endpoints.
+   - Establishing URL parameter aliases (`urlParam`) to prevent wire leaks into browser history.
+
+3. **Phase C: Interactive Workflows & Analytics (~35% of total effort — 0% Automated)**:
+   - Authoring modal search pickers (Family 3) for entity relationships and foreign keys.
+   - Designing analytical facet charts (Family 4) to summarize dataset distributions.
+   - Integrating domain-specific action buttons, status badge styling, and detail drawers.
+
+**Net Result**: Automated tooling achieves **~30–35% total project acceleration**. Engineers who treat scaffolding as a "turnkey 80% solution" ship uncurated, brittle interfaces that leak backend implementation details directly into the UI.
+
+---
+
+### The Second Witness Contract Probe
+
+Static OpenAPI/Swagger documents in legacy environments are notoriously incomplete. Backend developers frequently return undeclared dynamic attributes or omit query parameter schemas.
+
+To guarantee accurate scaffolding, `scaffold-domain-config.ts` uses the **Second Witness Protocol**:
+1. **First Witness (OpenAPI Schema)**: It queries `/documentation/json` (or reads a local `openapi.json`) to extract path parameters, query parameters, and declared schema models.
+2. **Second Witness (Live Wire Probe)**: If the remote schema is missing or incomplete, the script boots the Fastify application in-process and executes an injection probe (`GET /api/v1/:domain/discover?size=1`). It harvests actual runtime wire attributes from live responses or 9-spine stubs, merging undeclared fields into the resource catalog.
+3. **Generic Algorithmic Range Pairing**: Without any hardcoded domain assumptions, the script detects reciprocal range patterns (`fooMin`/`fooMax`, `min_foo`/`max_foo`, `foo_from`/`foo_to`, `fooStart`/`fooEnd`) and automatically configures range pairing.
+
+---
+
+### The 5-Point Human Architectural Audit Protocol
+
+Immediately after running `npm run scaffold:domain`, the engineer **MUST** open the generated `<domain>.resource.ts` file and execute the 5-point curation protocol before wiring components:
+
+```typescript
+// src/domains/<domain>/<domain>.resource.ts
+
+export const AUTOMOBILE_RESOURCE: ResourceDefinition = {
+  name: 'automobile',
+  label: 'Automobile Discovery',
+  // ...
+  fields: [
+    // ─────────────────────────────────────────────────────────────────────────
+    // STEP 1: RANGE PAIRING AUDIT (Vol 2 Ch 08-04)
+    // Verify min/max fields share identical rangeField and rangeRole.
+    // Collapses two wire parameters into a single user-facing range slider.
+    // ─────────────────────────────────────────────────────────────────────────
+    {
+      name: 'priceMin',
+      label: 'Price Min',
+      type: 'number',
+      filterable: true,
+      filterType: 'range',
+      rangeField: 'price',
+      rangeRole: 'min'
+    },
+    {
+      name: 'priceMax',
+      label: 'Price Max',
+      type: 'number',
+      filterable: true,
+      filterType: 'range',
+      rangeField: 'price',
+      rangeRole: 'max'
+    },
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // STEP 2: TABLE VISIBILITY & COLUMN LAYOUT (Vol 3 Ch 04-01)
+    // Hide technical IDs and audit stamps. Tune explicit widths.
+    // ─────────────────────────────────────────────────────────────────────────
+    {
+      name: 'id',
+      label: 'ID',
+      type: 'string',
+      visible: false,      // Do not clutter the primary table with technical UUIDs
+      sortable: false
+    },
+    {
+      name: 'title',
+      label: 'Vehicle Description',
+      type: 'string',
+      visible: true,
+      sortable: true,
+      width: '260px',
+      dataType: 'text'
+    },
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // STEP 3: UI FILTER CONTROL TYPES (Vol 2 Ch 06-02)
+    // Elevate plain text inputs to catalog-driven autocompletes or multiselects.
+    // ─────────────────────────────────────────────────────────────────────────
+    {
+      name: 'make',
+      label: 'Manufacturer',
+      type: 'string',
+      filterable: true,
+      filterType: 'multiselect',
+      optionsEndpoint: '/api/v1/automobile/pickers/makes'
+    },
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // STEP 4: THE ANTI-CORRUPTION SEAM (Vol 3 Ch 04-01 §Where it breaks)
+    // Map client URL parameters to wire parameters to prevent contract churn.
+    // ─────────────────────────────────────────────────────────────────────────
+    {
+      name: 'category',
+      label: 'Body Style',
+      type: 'string',
+      filterable: true,
+      urlParam: 'bodyStyle',     // Client URL: ?bodyStyle=suv
+      apiParam: 'category'       // Upstream Wire: ?category=suv
+    },
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // STEP 5: HIGHLIGHTING CHANNEL (Vol 2 Ch 08-04)
+    // Enable fields that participate in the 'h_*' highlight query channel.
+    // ─────────────────────────────────────────────────────────────────────────
+    {
+      name: 'model',
+      label: 'Model Name',
+      type: 'string',
+      highlightable: true
+    }
+  ]
+};
+```
+
+---
+
+### Command Line Reference
+
+```bash
+# Scaffolding via running Fastify instance (default: localhost:3000)
+npm run scaffold:domain -- --domain=inventory
+
+# Scaffolding via explicit remote Swagger URL
+npm run scaffold:domain -- --domain=order --url=http://api.staging.internal/documentation/json
+
+# Scaffolding via static OpenAPI specification file
+npm run scaffold:domain -- --domain=customer --spec=./specs/customer-api.json --out=./src/domains
+```
+
+---
+
 ## 90 · Verification: The Door Holds
 
-Execute these five verification checks before declaring Step 1 of the migration complete:
+Execute these six verification checks before declaring Step 1 of the migration complete:
 
 ### Check 1: Container Liveness & Health
 ```bash
@@ -527,3 +725,10 @@ In the BFF project:
 npm test
 ```
 *Expected*: 9/9 tests pass (ping, health, discover, and swagger documentation suites).
+
+### Check 6: Domain Configuration Scaffolder Baseline
+In the BFF project:
+```bash
+npm run scaffold:domain -- --domain=automobile
+```
+*Expected*: Discovers contract fields via OpenAPI/Second Witness, generates baseline `automobile.resource.ts`, `automobile.domain-config.ts`, and `automobile.models.ts`, and outputs the 30/70 curation warning.
